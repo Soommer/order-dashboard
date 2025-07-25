@@ -34,8 +34,9 @@ export class OrderDashboardComponent implements OnInit {
   this.errorMessage = null;
 
     this.orderService.loadOrders().subscribe({
-      next: () => {
+      next: (orders) => {
         this.loading = false;
+        console.log("Dane zamówień:", orders); // <<< WYŚWIETLA ODEBRANE DANE
         console.log(".....loading finished")
       },
       error: (error) => {
