@@ -35,13 +35,13 @@ export class OrderService {
 
   
   loadOrders() {
-    return this.http.get<CartResponse[]>('https://localhost:7247/api/Cart/ReturnUnfinished').pipe(
+    return this.http.get<CartResponse[]>('https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/api/Cart/ReturnUnfinished').pipe(
       tap(orders => this.ordersSubject.next(orders))
     );
   }
 
   markOrderCompleted(id: string): Observable<void> {
-    return this.http.put<void>(`https://localhost:7247/api/Cart?id=${id}`, {}).pipe(
+    return this.http.put<void>(`https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/api/Cart?id=${id}`, {}).pipe(
       tap(() => {
         this.ordersSubject.next(this.ordersSubject.value.filter(o => o.id !== id));
       })
@@ -51,7 +51,7 @@ export class OrderService {
 
    connectToOrderHub() {
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://localhost:7247/orderHub')
+      .withUrl('https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/orderHub')
       .build();
 
     this.hubConnection.on('NewOrder', (order: CartResponse) => {
