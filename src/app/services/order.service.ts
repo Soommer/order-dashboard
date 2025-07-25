@@ -1,9 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
-import { tap } from 'rxjs';
-import { Observable } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface CartItemInCartResponse {
   id: string;
@@ -30,32 +29,39 @@ export class OrderService {
   private ordersSubject = new BehaviorSubject<CartResponse[]>([]);
   orders$ = this.ordersSubject.asObservable();
   private hubConnection?: signalR.HubConnection;
+  private isBrowser: boolean;
 
-  constructor(private http: HttpClient) { }
+  private readonly apiUrl = 'https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io';
 
-  
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
   loadOrders() {
-    return this.http.get<CartResponse[]>('https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/api/Cart/ReturnUnfinished').pipe(
+    return this.http.get<CartResponse[]>(`${this.apiUrl}/api/Cart/ReturnUnfinished`).pipe(
       tap(orders => this.ordersSubject.next(orders))
     );
   }
 
   markOrderCompleted(id: string): Observable<void> {
-    return this.http.put<void>(`https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/api/Cart?id=${id}`, {}).pipe(
+    return this.http.put<void>(`${this.apiUrl}/api/Cart?id=${id}`, {}).pipe(
       tap(() => {
         this.ordersSubject.next(this.ordersSubject.value.filter(o => o.id !== id));
       })
     );
   }
 
+  connectToOrderHub() {
+    if (!this.isBrowser) return;
 
-   connectToOrderHub() {
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io/orderHub')
+      .withUrl(`${this.apiUrl}/orderHub`)
       .build();
 
     this.hubConnection.on('NewOrder', (order: CartResponse) => {
-      console.log(order);
       this.ordersSubject.next([order, ...this.ordersSubject.value]);
     });
 
@@ -63,6 +69,8 @@ export class OrderService {
       this.ordersSubject.next(this.ordersSubject.value.filter(o => o.id !== id));
     });
 
-    this.hubConnection.start().catch(console.error);
+    this.hubConnection
+      .start()
+      .catch(err => console.error('Błąd połączenia z SignalR:', err));
   }
 }
