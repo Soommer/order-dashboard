@@ -1,0 +1,11 @@
+<div *ngIf="loading">Ładowanie zamówień...</div>
+<div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+<div class="dashboard" *ngIf="!loading && !errorMessage">
+  <app-order-card
+    *ngFor="let order of orders$ | async"
+    [order]="order"
+    (completed)="onOrderCompleted(order.id)">
+  </app-order-card>
+  <p *ngIf="(orders$ | async)?.length === 0">Brak zamówień do realizacji</p>
+</div>

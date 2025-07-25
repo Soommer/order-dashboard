@@ -1,0 +1,22 @@
+<div class="order-card" [class.finished]="order.isFinished">
+  <div class="order-header">
+    <span>Zamówienie #{{order.id | slice:0:8}}</span>
+    <button (click)="complete()" [disabled]="order.isFinished">Zrealizowane</button>
+  </div>
+  <div class="order-details">
+    <p><b>Data:</b> {{order.createdAt | date:'short'}}</p>
+    <p><b>Suma:</b> {{order.total | currency:'PLN':'symbol-narrow'}}</p>
+  </div>
+  <div class="order-items">
+    <div *ngFor="let item of order.cartItems" class="item-row">
+      <p><b>{{item.menuItemName}}</b> ({{item.meatName}}, {{item.souceName}}, {{item.size}})</p>
+      <p>Dodatki: 
+        <ng-container *ngIf="item.extraNames.length > 0">
+          {{item.extraNames.join(', ')}}
+        </ng-container>
+        <ng-container *ngIf="item.extraNames.length === 0">brak</ng-container>
+      </p>
+      <p>Cena: {{item.totalPrice | currency:'PLN':'symbol-narrow'}}</p>
+    </div>
+  </div>
+</div>
