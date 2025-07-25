@@ -29,12 +29,14 @@ export class OrderDashboardComponent implements OnInit {
   }
 
   loadOrders() {
+    console.log("load orders start.....")
   this.loading = true;
   this.errorMessage = null;
 
     this.orderService.loadOrders().subscribe({
       next: () => {
         this.loading = false;
+        console.log(".....loading finished")
       },
       error: (error) => {
         this.loading = false;
