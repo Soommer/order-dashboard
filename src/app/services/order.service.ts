@@ -30,7 +30,6 @@ export class OrderService {
   orders$ = this.ordersSubject.asObservable();
   private hubConnection?: signalR.HubConnection;
   private isBrowser: boolean;
-
   private readonly apiUrl = 'https://sklep-api.wonderfulsand-657cf16a.polandcentral.azurecontainerapps.io';
 
   constructor(
@@ -56,21 +55,44 @@ export class OrderService {
 
   connectToOrderHub() {
     if (!this.isBrowser) return;
+    console.log('🔌 Próba połączenia z SignalR...');
+
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${this.apiUrl}/orderHub`)
+      .withAutomaticReconnect()
       .build();
 
     this.hubConnection.on('NewOrder', (order: CartResponse) => {
+      console.log('➡️ Odebrano NewOrder przez SignalR:', order);
       this.ordersSubject.next([order, ...this.ordersSubject.value]);
     });
 
     this.hubConnection.on('OrderCompleted', (id: string) => {
+      console.log('✅ Odebrano OrderCompleted:', id);
       this.ordersSubject.next(this.ordersSubject.value.filter(o => o.id !== id));
     });
 
-    this.hubConnection
-      .start()
-      .catch(err => console.error('Błąd połączenia z SignalR:', err));
+  this.hubConnection
+    .start()
+    .then(() => console.log("✅ SignalR connected"))
+    .catch(err => console.error("❌ SignalR connection error:", err));
+
+
+    //Debug
+
+    this.hubConnection.onclose(error => {
+      console.warn('❌ Połączenie SignalR zamknięte:', error);
+    });
+
+    this.hubConnection.onreconnecting(error => {
+      console.warn('♻️ Reconnecting to SignalR...', error);
+    });
+    
+
+    this.hubConnection.onreconnected(connectionId => {
+      console.log('✅ Reconnected to SignalR, connectionId:', connectionId);
+    });
+    // End Debug
   }
 }
